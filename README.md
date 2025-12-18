@@ -10,6 +10,7 @@ https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app/
 ## Overview
 
 This project implements a **rules-constrained AI training aid** designed to generate **safe, explainable, and sport-agnostic weekly training plans**.  
+
 The system combines **explicit safety rules** (such as session duration limits and conservative weekly progression) with **AI-assisted plan generation and motivational coaching**, prioritising transparency, feasibility, and responsible AI use.
 
 The artefact was developed as part of a final-year Computer Science project and focuses on **functionality, safety, and explainability**, rather than unconstrained optimisation or long-term predictive modelling.
@@ -100,7 +101,6 @@ This allows the system to:
 ## Installation (Local)
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/Arsh-24/AI-Training-Aid.git
 pip install -r requirements.txt
 streamlit run app.py
