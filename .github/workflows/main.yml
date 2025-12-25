@@ -1,0 +1,14 @@
+name: streamlit pinger
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Streamlit app
+        run: |
+          curl -s -L "https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app/" > /dev/null
