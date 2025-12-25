@@ -9,12 +9,13 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Streamlit app (robust)
+      - name: Ping Streamlit app (no redirects)
         run: |
-          URL="https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app/?keepalive=1"
+          URL="https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app/"
           echo "Pinging $URL"
           curl -sS -A "Mozilla/5.0" \
             --connect-timeout 10 \
             --max-time 25 \
-            --max-redirs 3 \
-            -L "$URL" > /dev/null
+            -o /dev/null \
+            -w "HTTP %{http_code} | redirect_to=%{redirect_url}\n" \
+            "$URL"
