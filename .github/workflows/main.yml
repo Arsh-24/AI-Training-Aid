@@ -16,47 +16,27 @@ jobs:
         run: |
           set -euo pipefail
 
-          BASE_URL="https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app"
-          TS="$(date +%s)"
-          URLS=(
-            "${BASE_URL}/"
-            "${BASE_URL}/?ping=${TS}"
-          )
+          URL="https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app"
 
           echo "Time (UTC): $(date -u)"
-          echo "Base URL: ${BASE_URL}"
+          echo "URL: $URL"
 
-          ping_once () {
-            local url="$1"
-            curl -sS -L \
-              -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36" \
-              --connect-timeout 10 \
-              --max-time 25 \
-              -D /tmp/headers.txt \
-              -o /dev/null \
-              -w "HTTP=%{http_code}\nFINAL_URL=%{url_effective}\nTIME_TOTAL=%{time_total}\n" \
-              "$url" | tee /tmp/result.txt
+          STATUS=$(curl -sS \
+            -A "Mozilla/5.0" \
+            --connect-timeout 10 \
+            --max-time 20 \
+            --max-redirs 5 \
+            -o /dev/null \
+            -w "%{http_code}" \
+            "$URL" || echo "000")
 
-            grep -E '^HTTP=' /tmp/result.txt | cut -d= -f2
-          }
+          echo "HTTP status: $STATUS"
 
-          MAX_ATTEMPTS=4
-          SLEEP_BETWEEN=15
-
-          for url in "${URLS[@]}"; do
-            success=0
-            for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
-              code="$(ping_once "$url")" || code="000"
-              if [[ "$code" == "200" ]]; then
-                success=1
-                break
-              fi
-              sleep "$SLEEP_BETWEEN"
-            done
-
-            if [[ "$success" -ne 1 ]]; then
+          case "$STATUS" in
+            200|301|302|303|307|308)
+              exit 0
+              ;;
+            *)
               exit 1
-            fi
-          done
-
-          echo "OK"
+              ;;
+          esac
