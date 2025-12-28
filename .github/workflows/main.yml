@@ -1,4 +1,4 @@
-name: streamlit pinger
+name: Streamlit Pinger
 
 on:
   schedule:
@@ -8,14 +8,55 @@ on:
 jobs:
   ping:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+
     steps:
-      - name: Ping Streamlit app (no redirects)
+      - name: Ping Streamlit app
+        shell: bash
         run: |
-          URL="https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app/"
-          echo "Pinging $URL"
-          curl -sS -A "Mozilla/5.0" \
-            --connect-timeout 10 \
-            --max-time 25 \
-            -o /dev/null \
-            -w "HTTP %{http_code} | redirect_to=%{redirect_url}\n" \
-            "$URL"
+          set -euo pipefail
+
+          BASE_URL="https://ai-training-aid-8b84t27ivzumzycyzwd6tv.streamlit.app"
+          TS="$(date +%s)"
+          URLS=(
+            "${BASE_URL}/"
+            "${BASE_URL}/?ping=${TS}"
+          )
+
+          echo "Time (UTC): $(date -u)"
+          echo "Base URL: ${BASE_URL}"
+
+          ping_once () {
+            local url="$1"
+            curl -sS -L \
+              -A "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36" \
+              --connect-timeout 10 \
+              --max-time 25 \
+              -D /tmp/headers.txt \
+              -o /dev/null \
+              -w "HTTP=%{http_code}\nFINAL_URL=%{url_effective}\nTIME_TOTAL=%{time_total}\n" \
+              "$url" | tee /tmp/result.txt
+
+            grep -E '^HTTP=' /tmp/result.txt | cut -d= -f2
+          }
+
+          MAX_ATTEMPTS=4
+          SLEEP_BETWEEN=15
+
+          for url in "${URLS[@]}"; do
+            success=0
+            for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+              code="$(ping_once "$url")" || code="000"
+              if [[ "$code" == "200" ]]; then
+                success=1
+                break
+              fi
+              sleep "$SLEEP_BETWEEN"
+            done
+
+            if [[ "$success" -ne 1 ]]; then
+              exit 1
+            fi
+          done
+
+          echo "OK"
